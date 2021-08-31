@@ -1,0 +1,1 @@
+Make long-lived streams more robust with a self-reconnecting and self-buffering byte stream connection. Works well with IoT sensors.  
