@@ -23,10 +23,6 @@ func init() {
 	testMaster = testingSuite{}
 }
 
-const STREAM_BOUNDARY = "JwnftdsGXBsijUljzOQsjqJmqZMvbGHqgxXn"
-
-var accepting = true
-
 func TestMain(t *testing.T) {
 	go startReverseProxy()
 

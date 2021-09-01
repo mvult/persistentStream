@@ -98,6 +98,7 @@ func (pss *PersistentStreamSender) getReattachedWriter() error {
 
 	errorHandle:
 		if err == nil {
+			logger.Println("Successfully reattached")
 			return err
 		} else {
 			logger.Printf("Error getting http writer. Underlying error: '%v'.  Attemps: %v out of %v\n", err, numGetWriterAttempts, MAX_GET_WRITER_ATTEMPS)

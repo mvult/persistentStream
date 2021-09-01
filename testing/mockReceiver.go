@@ -9,14 +9,15 @@ import (
 	"github.com/mvult/persistentStream/receiver"
 )
 
-func mockReceiver() {
-	http.HandleFunc("/test", handlePersistence)
+func mockReceiver(path string) {
+	http.HandleFunc(path, handlePersistence)
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)
 	}
 }
 
 func handlePersistence(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Got request")
 	receiver.HandlePersistentStream(w, r, STREAM_BOUNDARY, acceptFunc, writerFunc)
 }
 
