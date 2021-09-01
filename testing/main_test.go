@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"net/url"
 	"os/exec"
 	"persistentStream/sender"
-	"syscall"
+	"sync"
 	"testing"
+	"time"
 )
 
 type testingSuite struct {
@@ -23,31 +25,52 @@ const STREAM_BOUNDARY = "JwnftdsGXBsijUljzOQsjqJmqZMvbGHqgxXn"
 var accepting = true
 
 func TestMain(t *testing.T) {
-	// go startReverseProxy()
+	go startReverseProxy()
 
-	// go func() {
-	// 	time.Sleep(5 * time.Second)
-	// 	fmt.Println("Stopping proxy")
-	// 	stopReverseProxy()
-	// 	time.Sleep(20 * time.Second)
-	// 	fmt.Println("Starting proxy")
-	// 	startReverseProxy()
-	// }()
+	go func() {
+		time.Sleep(10 * time.Second)
+		fmt.Println("Stopping proxy")
+		stopReverseProxy()
+		time.Sleep(10 * time.Second)
+		fmt.Println("Starting proxy")
+		startReverseProxy()
+		time.Sleep(10 * time.Second)
+		fmt.Println("Stopping proxy")
+		stopReverseProxy()
+		time.Sleep(10 * time.Second)
+		fmt.Println("Starting proxy")
+		startReverseProxy()
+	}()
 
 	go mockReceiver()
-	pss, err := mockSender()
-	if err != nil {
-		t.Error("Failed to send")
+
+	tests := []string{"first", "second", "third"}
+
+	var wg sync.WaitGroup
+
+	for _, s := range tests {
+		time.Sleep(time.Second * 1)
+
+		go func(s string) {
+			wg.Add(1)
+			fmt.Println("Starting stream", s)
+			pss, err := mockSender(s)
+			if err != nil {
+				t.Error("Failed to send")
+			}
+			if err := pss.Wait(); err != nil {
+				t.Error(err)
+			}
+			wg.Done()
+		}(s)
 	}
-	if err := pss.Wait(); err != nil {
-		t.Error(err)
-	}
+	wg.Wait()
 
 }
 
-func mockSender() (*sender.PersistentStreamSender, error) {
+func mockSender(testingID string) (*sender.PersistentStreamSender, error) {
 	m := make(map[string]string)
-	m["Persistent-Testing-ID"] = "osjdifjofelkejlf"
+	m["Persistent-Testing-ID"] = testingID
 
 	u, _ := url.Parse("http://localhost:8082/test")
 
@@ -63,5 +86,5 @@ func startReverseProxy() {
 }
 
 func stopReverseProxy() {
-	testMaster.reverseProxy.Process.Signal(syscall.SIGINT)
+	testMaster.reverseProxy.Process.Kill()
 }

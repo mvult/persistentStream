@@ -1,6 +1,9 @@
 package receiver
 
-import "sync"
+import (
+	"errors"
+	"sync"
+)
 
 var master receiverManager
 
@@ -23,11 +26,17 @@ func (rm *receiverManager) get(s string) (*PersistentStreamReceiver, bool) {
 func (rm *receiverManager) set(psr *PersistentStreamReceiver) {
 	rm.lock.Lock()
 	defer rm.lock.Unlock()
+	_, ok := rm.streams[psr.id]
+	if ok {
+		panic(errors.New("Should be impossible to have the same id"))
+	}
+
 	rm.streams[psr.id] = psr
 }
 
 func (rm *receiverManager) delete(s string) {
 	rm.lock.Lock()
 	defer rm.lock.Unlock()
+	logger.Println("Deleting", s)
 	delete(rm.streams, s)
 }

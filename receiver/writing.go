@@ -93,6 +93,5 @@ func (pss *PersistentStreamReceiver) Write(p []byte) (int, error) {
 }
 
 func maybeNetworkError(err error) bool {
-	logger.Println(err)
 	return true
 }

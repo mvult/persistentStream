@@ -91,6 +91,7 @@ func (psw *PersistentStreamSender) writeSourceToBuffer(source io.ReadCloser) {
 func (pss *PersistentStreamSender) Wait() error {
 	select {
 	case err := <-pss.errorChan:
+		logger.Println(err)
 		return err
 	case <-pss.completeChan:
 		return nil

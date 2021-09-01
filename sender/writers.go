@@ -86,14 +86,16 @@ func (pss *PersistentStreamSender) getHttpWriter(reattach bool) error {
 
 func (pss *PersistentStreamSender) getReattachedWriter() error {
 	numGetWriterAttempts := 0
+	var err error
 
 	for {
-		if err := pss.receiverAccepting(true); err != nil {
-			return err
+		if err = pss.receiverAccepting(true); err != nil {
+			goto errorHandle
 		}
 
-		err := pss.getHttpWriter(true)
+		err = pss.getHttpWriter(true)
 
+	errorHandle:
 		if err == nil {
 			return err
 		} else {

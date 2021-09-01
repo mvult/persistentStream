@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -23,7 +24,7 @@ func acceptFunc(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func writerFunc(w http.ResponseWriter, r *http.Request) (io.WriteCloser, error) {
-	f, err := os.Create(r.Header.Get("Persistent-Testing-ID"))
+	f, err := os.Create(fmt.Sprintf("%v.toDelete", r.Header.Get("Persistent-Testing-ID")))
 	return f, err
 }
 func standardFunc(res *http.Response, err error) {

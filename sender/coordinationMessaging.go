@@ -49,6 +49,6 @@ func (psw *PersistentStreamSender) receiverAccepting(reattach bool) error {
 		logger.Println(err)
 		return err
 	}
-	logger.Printf("Coords response: %+v\n", respJson)
+
 	return nil
 }
