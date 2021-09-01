@@ -1,4 +1,4 @@
-module persistentStream
+module github.com/mvult/persistentStream
 
 go 1.17
 
