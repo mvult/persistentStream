@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/url"
 	"os/exec"
 	"persistentStream/sender"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -31,7 +33,7 @@ func TestMain(t *testing.T) {
 		time.Sleep(10 * time.Second)
 		fmt.Println("Stopping proxy")
 		stopReverseProxy()
-		time.Sleep(10 * time.Second)
+		time.Sleep(30 * time.Second)
 		fmt.Println("Starting proxy")
 		startReverseProxy()
 		time.Sleep(10 * time.Second)
@@ -78,7 +80,15 @@ func mockSender(testingID string) (*sender.PersistentStreamSender, error) {
 }
 
 func startReverseProxy() {
-	testMaster.reverseProxy = exec.Command("./blankStream/reverseProxyServer/reverseProxyServer.exe")
+	switch runtime.GOOS {
+	case "windows":
+		testMaster.reverseProxy = exec.Command("./blankStream/reverseProxyServer/reverseProxyServer.exe")
+	case "linux":
+		testMaster.reverseProxy = exec.Command("./blankStream/reverseProxyServer/reverseProxyServer")
+	default:
+		log.Fatal("OS not supported")
+	}
+
 	err := testMaster.reverseProxy.Start()
 	if err != nil {
 		panic(err)
