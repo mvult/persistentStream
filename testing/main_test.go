@@ -85,6 +85,8 @@ func startReverseProxy() {
 		testMaster.reverseProxy = exec.Command("./blankStream/reverseProxyServer/reverseProxyServer.exe")
 	case "linux":
 		testMaster.reverseProxy = exec.Command("./blankStream/reverseProxyServer/reverseProxyServer")
+	case "darwin":
+		testMaster.reverseProxy = exec.Command("./blankStream/reverseProxyServer/reverseProxyServer")
 	default:
 		log.Fatal("OS not supported")
 	}
