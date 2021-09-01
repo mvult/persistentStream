@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/mvult/persistentStream/sender/globals"
+	// "persistentStream/sender/globals"
 )
 
 func (psw *PersistentStreamSender) receiverAccepting(reattach bool) error {

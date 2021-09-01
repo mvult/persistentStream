@@ -1,4 +1,4 @@
-package persistentstream
+package persistentStream
 
 import (
 	"io/ioutil"
