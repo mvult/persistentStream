@@ -77,7 +77,12 @@ func SendStreamWithWriter(target *url.URL, boundary string, httpHeaders map[stri
 			callback:    responseFunc,
 		}}
 
-	err = ret.SendBufferToHttp()
+	go func() {
+		err := ret.SendBufferToHttp()
+		if err != nil {
+			logger.Println(err)
+		}
+	}()
 
 	return &ret, err
 }
