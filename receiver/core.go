@@ -9,9 +9,10 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
-	"persistentStream/sender/globals"
 	"sync"
 	"time"
+
+	"github.com/mvult/persistentStream/sender/globals"
 )
 
 const ITERATIONS_WAITING_LIMIT = 120

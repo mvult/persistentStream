@@ -29,7 +29,7 @@ func (pss *PersistentStreamSender) writeToHttp(remnantBytes []byte) (newRemnantB
 		n, err = pss.buffer.Read(buf)
 		if err == io.EOF {
 
-			if pss.buffer.Closed {
+			if pss.buffer.IsClosed() {
 				if n != 0 {
 					if _, err := pss.writer.Write(buf[:n]); err != nil {
 						logger.Println(err)

@@ -11,6 +11,19 @@ type Buffer struct {
 	Closed bool
 }
 
+func (b *Buffer) Close() error {
+	b.M.Lock()
+	defer b.M.Unlock()
+	b.Closed = true
+	return nil
+}
+
+func (b *Buffer) IsClosed() bool {
+	b.M.Lock()
+	defer b.M.Unlock()
+	return b.Closed
+}
+
 func (b *Buffer) Read(p []byte) (n int, err error) {
 	b.M.Lock()
 	defer b.M.Unlock()

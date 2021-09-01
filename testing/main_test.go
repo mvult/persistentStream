@@ -5,11 +5,12 @@ import (
 	"log"
 	"net/url"
 	"os/exec"
-	"persistentStream/sender"
 	"runtime"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/mvult/persistentStream/sender"
 )
 
 type testingSuite struct {
@@ -76,7 +77,7 @@ func mockSender(testingID string) (*sender.PersistentStreamSender, error) {
 
 	u, _ := url.Parse("http://localhost:8082/test")
 
-	return sender.SendStream(getSource(), u, STREAM_BOUNDARY, m, nil, standardFunc)
+	return sender.SendStreamWithReader(getSource(), u, STREAM_BOUNDARY, m, nil, standardFunc)
 }
 
 func startReverseProxy() {

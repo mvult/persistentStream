@@ -33,7 +33,7 @@ type connectionParams struct {
 	callback    func(r *http.Response, err error)
 }
 
-func SendStream(source io.ReadCloser, target *url.URL, boundary string, httpHeaders map[string]string, mimeHeaders map[string]string, responseFunc func(r *http.Response, err error)) (*PersistentStreamSender, error) {
+func SendStreamWithReader(source io.ReadCloser, target *url.URL, boundary string, httpHeaders map[string]string, mimeHeaders map[string]string, responseFunc func(r *http.Response, err error)) (*PersistentStreamSender, error) {
 
 	var err error
 
@@ -58,6 +58,36 @@ func SendStream(source io.ReadCloser, target *url.URL, boundary string, httpHead
 	return &ret, err
 }
 
+func SendStreamWithWriter(target *url.URL, boundary string, httpHeaders map[string]string, mimeHeaders map[string]string, responseFunc func(r *http.Response, err error)) (*PersistentStreamSender, error) {
+
+	var err error
+
+	ret := PersistentStreamSender{
+		buffer:       Buffer{},
+		id:           uuid.New().String(),
+		errorChan:    make(chan error, 1),
+		completeChan: make(chan bool, 1),
+		connectionParams: connectionParams{
+			target:      target,
+			boundary:    boundary,
+			httpHeaders: httpHeaders,
+			mimeHeaders: mimeHeaders,
+			callback:    responseFunc,
+		}}
+
+	err = ret.SendBufferToHttp()
+
+	return &ret, err
+}
+
+func (pss *PersistentStreamSender) Write(b []byte) (int, error) {
+	return pss.buffer.Write(b)
+}
+
+func (pss *PersistentStreamSender) Close() error {
+	return pss.buffer.Close()
+}
+
 func (psw *PersistentStreamSender) writeSourceToBuffer(source io.ReadCloser) {
 	var n int
 	var err error
@@ -70,7 +100,7 @@ func (psw *PersistentStreamSender) writeSourceToBuffer(source io.ReadCloser) {
 			if _, err = psw.buffer.Write(buf[:n]); err != nil {
 				logger.Panicln(err)
 			}
-			psw.buffer.Closed = true
+			psw.buffer.Close()
 
 			if err := source.Close(); err != nil {
 				logger.Println("Not fatal error:", err)
@@ -91,7 +121,6 @@ func (psw *PersistentStreamSender) writeSourceToBuffer(source io.ReadCloser) {
 func (pss *PersistentStreamSender) Wait() error {
 	select {
 	case err := <-pss.errorChan:
-		logger.Println(err)
 		return err
 	case <-pss.completeChan:
 		return nil

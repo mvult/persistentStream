@@ -4,7 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"persistentStream/sender/globals"
+
+	"github.com/mvult/persistentStream/sender/globals"
 )
 
 func reattach(w http.ResponseWriter, r *http.Request) error {

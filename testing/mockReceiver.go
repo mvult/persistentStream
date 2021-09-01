@@ -5,7 +5,8 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"persistentStream/receiver"
+
+	"github.com/mvult/persistentStream/receiver"
 )
 
 func mockReceiver() {

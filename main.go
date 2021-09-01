@@ -13,7 +13,7 @@ import (
 func init() {
 	u, _ := url.Parse("www.google.com")
 	f, _ := os.Create("Hello")
-	sender.SendStream(f, u, "923423", nil, nil, StandardResponse)
+	sender.SendStreamWithReader(f, u, "923423", nil, nil, StandardResponse)
 }
 
 func StandardResponse(res *http.Response, err error) {
