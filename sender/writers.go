@@ -2,10 +2,11 @@ package sender
 
 import (
 	"errors"
-	"persistentStream/sender/globals"
-	"persistentStream/sender/timeoutWriter"
 	"strings"
 	"time"
+
+	"github.com/mvult/persistentStream/sender/globals"
+	"github.com/mvult/persistentStream/sender/timeoutWriter"
 
 	"github.com/mvult/httpStreamWriter"
 )

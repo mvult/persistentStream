@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"persistentStream/sender/globals"
+
+	"github.com/mvult/persistentStream/sender/globals"
 )
 
 func (psw *PersistentStreamSender) receiverAccepting(reattach bool) error {

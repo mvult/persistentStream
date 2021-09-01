@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"persistentStream/sender"
+
+	"github.com/mvult/persistentStream/sender"
 )
 
 func init() {
