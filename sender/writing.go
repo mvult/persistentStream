@@ -1,6 +1,7 @@
 package sender
 
 import (
+	"fmt"
 	"io"
 	"time"
 )
@@ -48,15 +49,24 @@ func (pss *PersistentStreamSender) writeToHttp(remnantBytes []byte) (newRemnantB
 			continue
 		}
 
+		if verbose {
+			fmt.Println("Bytes written to HTTP:", n)
+		}
+
 		if err != nil {
 			logger.Println(err)
 			return buf[:n], err
 		}
 
-		_, err := pss.writer.Write(buf[:n])
+		n, err := pss.writer.Write(buf[:n])
 		if err != nil {
 			logger.Println(err)
 			return buf[:n], err
 		}
+
+		if verbose {
+			fmt.Println("Bytes written to HTTP:", n)
+		}
+
 	}
 }

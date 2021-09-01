@@ -18,9 +18,11 @@ import (
 const ITERATIONS_WAITING_LIMIT = 120
 
 var logger *log.Logger
+var verbose bool
 
 func init() {
 	logger = log.New(os.Stdout, "", log.Llongfile|log.Ldate|log.Ltime)
+	verbose = false
 }
 
 type PersistentStreamReceiver struct {
@@ -160,4 +162,8 @@ func handleStream(w http.ResponseWriter, r *http.Request, writerFunc func(w http
 func getMIMEMultipartReader(r *http.Request, boundary string) (*multipart.Part, error) {
 	partRdr := multipart.NewReader(r.Body, boundary)
 	return partRdr.NextPart()
+}
+
+func SetVerbose(v bool) {
+	verbose = v
 }

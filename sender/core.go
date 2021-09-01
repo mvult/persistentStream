@@ -11,9 +11,11 @@ import (
 )
 
 var logger *log.Logger
+var verbose bool
 
 func init() {
 	logger = log.New(os.Stdout, "", log.Llongfile|log.Ldate|log.Ltime)
+	verbose = false
 }
 
 type PersistentStreamSender struct {
@@ -125,4 +127,8 @@ func (pss *PersistentStreamSender) Wait() error {
 	case <-pss.completeChan:
 		return nil
 	}
+}
+
+func SetVerbose(v bool) {
+	verbose = v
 }
