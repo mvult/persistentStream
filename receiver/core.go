@@ -119,8 +119,10 @@ func handleStream(w http.ResponseWriter, r *http.Request, writerFunc func(w http
 	var pss *PersistentStreamReceiver
 	defer func() {
 		if err != nil {
-			logger.Println("Fatal persistence error.  Closing downstream writer.")
+			logger.Println("Fatal persistence error.  Closing downstream writer. Underlying error.", err)
+			logger.Printf("%+v\n", pss)
 			pss.writer.Close()
+			close(pss.inboundCompleteChan)
 		}
 	}()
 
