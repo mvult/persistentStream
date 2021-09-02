@@ -26,6 +26,10 @@ func (psw *PersistentStreamSender) receiverAccepting(reattach bool) error {
 		req.Header[globals.INITIAL_OR_REATTACH_HEADER] = []string{globals.INITIAL}
 	}
 
+	for k, h := range psw.connectionParams.httpHeaders {
+		req.Header[k] = []string{h}
+	}
+
 	client := &http.Client{Timeout: 0}
 
 	res, err := client.Do(req)

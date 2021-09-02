@@ -41,7 +41,7 @@ func TestMain(t *testing.T) {
 		startReverseProxy()
 	}()
 
-	go mockReceiver()
+	go mockReceiver("/test")
 
 	tests := []string{"first", "second", "third"}
 

@@ -60,7 +60,12 @@ func (pss *PersistentStreamSender) SendBufferToHttp() (err error) {
 }
 
 func (pss *PersistentStreamSender) getHttpWriter(reattach bool) error {
-	tmpHeaders := pss.connectionParams.httpHeaders
+	tmpHeaders := make(map[string]string)
+	// tmpHeaders := pss.connectionParams.httpHeaders
+	for k, h := range pss.connectionParams.httpHeaders {
+		tmpHeaders[k] = h
+	}
+
 	tmpHeaders[globals.COORD_OR_STREAM_HEADER] = globals.STREAM
 	tmpHeaders[globals.ID_HEADER] = pss.id
 
