@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/textproto"
 	"os"
 
 	"github.com/mvult/persistentStream/receiver"
@@ -25,8 +26,9 @@ func acceptFunc(w http.ResponseWriter, r *http.Request) bool {
 	return accepting
 }
 
-func writerFunc(w http.ResponseWriter, r *http.Request) (io.WriteCloser, error) {
+func writerFunc(w http.ResponseWriter, r *http.Request, mimeHeader textproto.MIMEHeader) (io.WriteCloser, error) {
 	f, err := os.Create(fmt.Sprintf("%v.toDelete", r.Header.Get("Persistent-Testing-ID")))
+	fmt.Println(mimeHeader)
 	return f, err
 }
 func standardFunc(res *http.Response, err error) {

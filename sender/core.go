@@ -1,6 +1,8 @@
 package sender
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -37,9 +39,18 @@ type connectionParams struct {
 
 func SendStreamWithReader(source io.ReadCloser, target *url.URL, boundary string, httpHeaders map[string]string, mimeHeaders map[string]string, responseFunc func(r *http.Response, err error)) (*PersistentStreamSender, error) {
 
+	var ret PersistentStreamSender
+
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Println("Recovered from persistentStream panic", r)
+			ret.errorChan <- errors.New(fmt.Sprintf("Panic in persistentStream: %v\n", r))
+		}
+	}()
+
 	var err error
 
-	ret := PersistentStreamSender{
+	ret = PersistentStreamSender{
 		buffer:       Buffer{},
 		id:           uuid.New().String(),
 		errorChan:    make(chan error, 1),

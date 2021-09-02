@@ -8,6 +8,7 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"os"
 	"sync"
 	"time"
@@ -36,7 +37,7 @@ type PersistentStreamReceiver struct {
 	boundary              string
 }
 
-func newReceiver(w http.ResponseWriter, r *http.Request, writerFunc func(w http.ResponseWriter, r *http.Request) (io.WriteCloser, error), boundary string) (*PersistentStreamReceiver, error) {
+func newReceiver(w http.ResponseWriter, r *http.Request, writerFunc func(w http.ResponseWriter, r *http.Request, mimeHeader textproto.MIMEHeader) (io.WriteCloser, error), boundary string) (*PersistentStreamReceiver, error) {
 	id := r.Header.Get(globals.ID_HEADER)
 	if id == "" {
 		return &PersistentStreamReceiver{}, errors.New(fmt.Sprintf("Persistence stream doesn't include %v header with valid value", globals.ID_HEADER))
@@ -47,7 +48,7 @@ func newReceiver(w http.ResponseWriter, r *http.Request, writerFunc func(w http.
 		return &PersistentStreamReceiver{}, err
 	}
 
-	wrt, err := writerFunc(w, r)
+	wrt, err := writerFunc(w, r, rdr.Header)
 	if err != nil {
 		return &PersistentStreamReceiver{}, err
 	}
@@ -67,7 +68,7 @@ func newReceiver(w http.ResponseWriter, r *http.Request, writerFunc func(w http.
 	return &ret, nil
 }
 
-func HandlePersistentStream(w http.ResponseWriter, r *http.Request, boundary string, acceptFunc func(w http.ResponseWriter, r *http.Request) bool, writerFunc func(w http.ResponseWriter, r *http.Request) (io.WriteCloser, error)) {
+func HandlePersistentStream(w http.ResponseWriter, r *http.Request, boundary string, acceptFunc func(w http.ResponseWriter, r *http.Request) bool, writerFunc func(w http.ResponseWriter, r *http.Request, mimeHeader textproto.MIMEHeader) (io.WriteCloser, error)) {
 
 	isCoord := r.Header.Get(globals.COORD_OR_STREAM_HEADER) == globals.COORD
 	var b []byte
@@ -114,7 +115,7 @@ func handleCoordination(w http.ResponseWriter, r *http.Request, acceptFunc func(
 	}
 }
 
-func handleStream(w http.ResponseWriter, r *http.Request, writerFunc func(w http.ResponseWriter, r *http.Request) (io.WriteCloser, error), boundary string) error {
+func handleStream(w http.ResponseWriter, r *http.Request, writerFunc func(w http.ResponseWriter, r *http.Request, mimeHeader textproto.MIMEHeader) (io.WriteCloser, error), boundary string) error {
 	isInitial := r.Header.Get(globals.INITIAL_OR_REATTACH_HEADER) == globals.INITIAL
 
 	if !isInitial {
