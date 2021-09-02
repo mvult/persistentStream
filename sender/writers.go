@@ -24,6 +24,8 @@ func (pss *PersistentStreamSender) SendBufferToHttp() (err error) {
 		return
 	}
 
+	logger.Println("Sending to HTTP")
+
 	go func() {
 		numReconnectAttemps := 0
 		var remnantBytes []byte
@@ -35,7 +37,6 @@ func (pss *PersistentStreamSender) SendBufferToHttp() (err error) {
 				}
 			}
 			numReconnectAttemps++
-
 			remnantBytes, err = pss.writeToHttp(remnantBytes)
 			if err == nil {
 				logger.Println("Succesfully completed HTTP send")

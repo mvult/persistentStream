@@ -52,7 +52,6 @@ func newReceiver(w http.ResponseWriter, r *http.Request, writerFunc func(w http.
 	if err != nil {
 		return &PersistentStreamReceiver{}, err
 	}
-
 	ret := PersistentStreamReceiver{
 		id:                    id,
 		writer:                wrt,
@@ -115,16 +114,26 @@ func handleCoordination(w http.ResponseWriter, r *http.Request, acceptFunc func(
 	}
 }
 
-func handleStream(w http.ResponseWriter, r *http.Request, writerFunc func(w http.ResponseWriter, r *http.Request, mimeHeader textproto.MIMEHeader) (io.WriteCloser, error), boundary string) error {
+func handleStream(w http.ResponseWriter, r *http.Request, writerFunc func(w http.ResponseWriter, r *http.Request, mimeHeader textproto.MIMEHeader) (io.WriteCloser, error), boundary string) (err error) {
+
+	var pss *PersistentStreamReceiver
+	defer func() {
+		if err != nil {
+			pss.writer.Close()
+		}
+	}()
+
 	isInitial := r.Header.Get(globals.INITIAL_OR_REATTACH_HEADER) == globals.INITIAL
 
 	if !isInitial {
-		return reattach(w, r)
+		err = reattach(w, r)
+		return
 
 	} else {
-		pss, err := newReceiver(w, r, writerFunc, boundary)
+		var pss *PersistentStreamReceiver
+		pss, err = newReceiver(w, r, writerFunc, boundary)
 		if err != nil {
-			return err
+			return
 		}
 
 		iterationsWaiting := 0
@@ -132,7 +141,8 @@ func handleStream(w http.ResponseWriter, r *http.Request, writerFunc func(w http
 		for {
 			if pss.getWaitingForReplacement() {
 				if iterationsWaiting > ITERATIONS_WAITING_LIMIT {
-					return fmt.Errorf("Waited too long for replacement stream %v\n", pss.id)
+					err = fmt.Errorf("Waited too long for replacement stream %v\n", pss.id)
+					return
 				}
 
 				iterationsWaiting++
@@ -144,17 +154,16 @@ func handleStream(w http.ResponseWriter, r *http.Request, writerFunc func(w http
 			}
 			iterationsWaiting = 0
 
-			if err := pss.writeToDownstream(); err != nil {
+			if err = pss.writeToDownstream(); err != nil {
 				if maybeNetworkError(err) {
 					pss.setWaitingForReplacement(true)
 					continue
 				} else {
-					return err
+					return
 				}
 			} else {
-
 				master.delete(pss.id)
-				return nil
+				return
 			}
 		}
 	}

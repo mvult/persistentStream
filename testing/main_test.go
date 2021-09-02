@@ -24,9 +24,9 @@ func init() {
 }
 
 func TestMain(t *testing.T) {
-	go startReverseProxy()
 
 	go func() {
+		startReverseProxy()
 		time.Sleep(10 * time.Second)
 		fmt.Println("Stopping proxy")
 		stopReverseProxy()
@@ -95,5 +95,7 @@ func startReverseProxy() {
 }
 
 func stopReverseProxy() {
-	testMaster.reverseProxy.Process.Kill()
+	if err := testMaster.reverseProxy.Process.Kill(); err != nil {
+		panic(err)
+	}
 }
