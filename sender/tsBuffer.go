@@ -33,6 +33,7 @@ func (b *Buffer) Read(p []byte) (n int, err error) {
 func (b *Buffer) Write(p []byte) (n int, err error) {
 	b.M.Lock()
 	defer b.M.Unlock()
+
 	return b.B.Write(p)
 }
 

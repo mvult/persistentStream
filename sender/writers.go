@@ -2,6 +2,7 @@ package sender
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -33,8 +34,8 @@ func (pss *PersistentStreamSender) SendBufferToHttp() (err error) {
 		for {
 			if numReconnectAttemps > 0 {
 				if err = pss.getReattachedWriter(); err != nil {
-					logger.Println("Sending error on sender errorChan and terminating.  Error:", err)
-					pss.errorChan <- err
+					logger.Println(err)
+					pss.TerminateOnError(err)
 					return
 				}
 			}
@@ -47,14 +48,16 @@ func (pss *PersistentStreamSender) SendBufferToHttp() (err error) {
 			}
 
 			if !isNetworkError(err) {
-				logger.Printf("Unknown HTTP error: %v.  Terminating persistent send. \n", err.Error())
-				pss.errorChan <- err
+				err = fmt.Errorf("Unknown HTTP error: %v.  Terminating persistent send. \n", err.Error())
+				logger.Println(err)
+				pss.TerminateOnError(err)
+				return
 			}
 
 			if numReconnectAttemps > MAX_RECONNECT_ATTEMPTS {
 				err = errors.New("Persistent stream reached reconnect attempt limit")
-				logger.Println("Sending error on sender errorChan and terminating.  Error:", err)
-				pss.errorChan <- err
+				logger.Println(err)
+				pss.TerminateOnError(err)
 				return
 			}
 
