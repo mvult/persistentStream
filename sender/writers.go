@@ -12,7 +12,7 @@ import (
 )
 
 const MAX_RECONNECT_ATTEMPTS = 30
-const MAX_GET_WRITER_ATTEMPS = 30
+const MAX_GET_WRITER_ATTEMPS = 90
 
 func (pss *PersistentStreamSender) SendBufferToHttp() (err error) {
 	// send initial coords message
@@ -33,7 +33,9 @@ func (pss *PersistentStreamSender) SendBufferToHttp() (err error) {
 		for {
 			if numReconnectAttemps > 0 {
 				if err = pss.getReattachedWriter(); err != nil {
+					logger.Println("Sending error on sender errorChan and terminating.  Error:", err)
 					pss.errorChan <- err
+					return
 				}
 			}
 			numReconnectAttemps++
@@ -50,7 +52,10 @@ func (pss *PersistentStreamSender) SendBufferToHttp() (err error) {
 			}
 
 			if numReconnectAttemps > MAX_RECONNECT_ATTEMPTS {
-				pss.errorChan <- errors.New("Persistent stream reached reconnect attempt limit")
+				err = errors.New("Persistent stream reached reconnect attempt limit")
+				logger.Println("Sending error on sender errorChan and terminating.  Error:", err)
+				pss.errorChan <- err
+				return
 			}
 
 			logger.Printf("Possible network error: %v.  ATTEMPTING TO RECONNECT IN 5 seconds.  Attempt %v of %v\n", err.Error(), numReconnectAttemps, MAX_RECONNECT_ATTEMPTS)

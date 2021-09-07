@@ -14,6 +14,7 @@ import (
 
 var logger *log.Logger
 var verbose bool
+var verboseLog *log.Logger
 
 func init() {
 	logger = log.New(os.Stdout, "", log.Llongfile|log.Ldate|log.Ltime)
@@ -147,4 +148,12 @@ func (pss *PersistentStreamSender) Wait() error {
 
 func SetVerbose(v bool) {
 	verbose = v
+	if v {
+		f, err := os.Create("persistentStreamSender.log")
+		if err != nil {
+			logger.Println(err)
+			return
+		}
+		verboseLog = log.New(f, "", log.Ldate|log.Ltime)
+	}
 }
