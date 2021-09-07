@@ -174,5 +174,5 @@ func (pss *PersistentStreamSender) TerminateOnError(err error) {
 		pss.errorChan <- err
 	}()
 	pss.terminated = true
-	logger.Println("Terminating persistent send stream")
+	logger.Println("Terminating persistent send stream due to error", err)
 }
