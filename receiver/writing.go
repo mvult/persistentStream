@@ -2,7 +2,6 @@ package receiver
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"time"
 )
@@ -31,20 +30,28 @@ func (pss *PersistentStreamReceiver) writeToDownstream() (err error) {
 				break
 			}
 			logger.Println(err)
+			if verbose {
+				verboseLog.Printf("%v Read error %v\n", pss.id, err)
+			}
 			return err
 		}
 
 		if verbose {
-			fmt.Println("Bytes read from sender", n)
+			verboseLog.Printf("%v Bytes read from sender: %v\n", pss.id, n)
 		}
 
 		if n, err = pss.Write(buf[:n]); err != nil {
 			logger.Println(err)
+
+			if verbose {
+				verboseLog.Printf("%v Write error %v\n", pss.id, err)
+			}
+
 			return err
 		}
 
 		if verbose {
-			fmt.Println("Bytes written to destination", n)
+			verboseLog.Printf("%v Bytes sent to destination: %v\n", pss.id, n)
 		}
 	}
 

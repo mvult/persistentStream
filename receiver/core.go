@@ -19,6 +19,7 @@ import (
 const ITERATIONS_WAITING_LIMIT = 120
 
 var logger *log.Logger
+var verboseLog *log.Logger
 var verbose bool
 
 func init() {
@@ -184,4 +185,12 @@ func getMIMEMultipartReader(r *http.Request, boundary string) (*multipart.Part, 
 
 func SetVerbose(v bool) {
 	verbose = v
+	if v {
+		f, err := os.Create("persistentStreamReceiver.log")
+		if err != nil {
+			logger.Println(err)
+			return
+		}
+		verboseLog = log.New(f, "", log.Ldate|log.Ltime)
+	}
 }

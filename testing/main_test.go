@@ -64,7 +64,7 @@ func TestMain(t *testing.T) {
 		}(s)
 	}
 	wg.Wait()
-
+	stopReverseProxy()
 }
 
 func mockSender(testingID string) (*sender.PersistentStreamSender, error) {
