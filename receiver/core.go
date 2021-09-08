@@ -75,15 +75,17 @@ func HandlePersistentStream(w http.ResponseWriter, r *http.Request, boundary str
 	if isCoord {
 		if err := handleCoordination(w, r, acceptFunc); err != nil {
 			b, _ = json.Marshal(globals.JsonResponse{Status: "failure", Error: err.Error()})
+		} else {
+			b, _ = json.Marshal(globals.JsonResponse{Status: "success"})
 		}
-		b, _ = json.Marshal(globals.JsonResponse{Status: "success"})
 		w.Write(b)
 		return
 	} else {
 		if err := handleStream(w, r, writerFunc, boundary); err != nil {
 			b, _ = json.Marshal(globals.JsonResponse{Status: "failure", Error: err.Error()})
+		} else {
+			b, _ = json.Marshal(globals.JsonResponse{Status: "success"})
 		}
-		b, _ = json.Marshal(globals.JsonResponse{Status: "success"})
 		w.Write(b)
 		return
 	}
@@ -92,7 +94,8 @@ func HandlePersistentStream(w http.ResponseWriter, r *http.Request, boundary str
 
 func handleCoordination(w http.ResponseWriter, r *http.Request, acceptFunc func(w http.ResponseWriter, r *http.Request) bool) error {
 
-	isInitial := r.Header.Get(globals.COORD_OR_STREAM_HEADER) == globals.INITIAL
+	isInitial := r.Header.Get(globals.INITIAL_OR_REATTACH_HEADER) == globals.INITIAL
+	logger.Println(isInitial, r.Header, r.Header.Get(globals.COORD_OR_STREAM_HEADER) == globals.INITIAL, r.Header.Get(globals.COORD_OR_STREAM_HEADER), globals.INITIAL)
 
 	if isInitial {
 		if acceptFunc(w, r) {
@@ -103,7 +106,7 @@ func handleCoordination(w http.ResponseWriter, r *http.Request, acceptFunc func(
 	} else {
 		_, ok := master.get(r.Header.Get(globals.ID_HEADER))
 		accepting := acceptFunc(w, r)
-
+		logger.Println(ok, accepting)
 		if accepting && ok {
 			return nil
 		} else if !ok {
@@ -120,14 +123,15 @@ func handleStream(w http.ResponseWriter, r *http.Request, writerFunc func(w http
 	defer func() {
 		if err != nil {
 			logger.Println("Fatal persistence error.  Closing downstream writer. Underlying error.", err)
-			closing := true
-			if pss == nil || pss.writer == nil {
-				closing = false
-			}
-			logger.Printf("PSS: %+v   Writer: %+v  Closing: %v\n", pss, pss.writer, closing)
+			logger.Printf("PSS: %+v   Writer: %+v \n", pss, pss.writer)
 
-			if closing {
+			if pss.writer != nil {
 				pss.writer.Close()
+			}
+
+			if pss.inboundCompleteChan != nil {
+				
+			}
 				close(pss.inboundCompleteChan)
 			}
 		}
