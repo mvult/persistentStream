@@ -116,7 +116,6 @@ func (pss *PersistentStreamSender) getReattachedWriter() error {
 
 			goto errorHandle
 		}
-		logger.Println(err)
 
 		err = pss.getHttpWriter(true)
 

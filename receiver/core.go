@@ -79,24 +79,21 @@ func HandlePersistentStream(w http.ResponseWriter, r *http.Request, boundary str
 		} else {
 			b, _ = json.Marshal(globals.JsonResponse{Status: "success"})
 		}
-		w.Write(b)
-		return
 	} else {
 		if err := handleStream(w, r, writerFunc, boundary); err != nil {
 			b, _ = json.Marshal(globals.JsonResponse{Status: "failure", Error: err.Error()})
 		} else {
 			b, _ = json.Marshal(globals.JsonResponse{Status: "success"})
 		}
-		w.Write(b)
-		return
 	}
-
+	w.Write(b)
+	logger.Printf("Responding to persistence request %v.  Is Coord: %v\n", string(b), isCoord)
+	return
 }
 
 func handleCoordination(w http.ResponseWriter, r *http.Request, acceptFunc func(w http.ResponseWriter, r *http.Request) bool) error {
 
 	isInitial := r.Header.Get(globals.INITIAL_OR_REATTACH_HEADER) == globals.INITIAL
-	logger.Println(isInitial, r.Header, r.Header.Get(globals.COORD_OR_STREAM_HEADER) == globals.INITIAL, r.Header.Get(globals.COORD_OR_STREAM_HEADER), globals.INITIAL)
 
 	if isInitial {
 		if acceptFunc(w, r) {
@@ -107,7 +104,7 @@ func handleCoordination(w http.ResponseWriter, r *http.Request, acceptFunc func(
 	} else {
 		_, ok := master.get(r.Header.Get(globals.ID_HEADER))
 		accepting := acceptFunc(w, r)
-		logger.Println(ok, accepting)
+
 		if accepting && ok {
 			return nil
 		} else if !ok {
