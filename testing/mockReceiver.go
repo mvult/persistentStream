@@ -11,6 +11,7 @@ import (
 )
 
 func mockReceiver(path string) {
+	receiver.SetVerbose(true)
 	http.HandleFunc(path, handlePersistence)
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)

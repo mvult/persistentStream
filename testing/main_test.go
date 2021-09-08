@@ -46,7 +46,7 @@ func TestMain(t *testing.T) {
 	tests := []string{"first", "second", "third"}
 
 	var wg sync.WaitGroup
-
+	sender.SetVerbose(true)
 	for _, s := range tests {
 		time.Sleep(time.Second * 1)
 
@@ -64,7 +64,7 @@ func TestMain(t *testing.T) {
 		}(s)
 	}
 	wg.Wait()
-
+	stopReverseProxy()
 }
 
 func mockSender(testingID string) (*sender.PersistentStreamSender, error) {

@@ -14,6 +14,7 @@ import (
 
 var logger *log.Logger
 var verbose bool
+var verboseLog *log.Logger
 
 func init() {
 	logger = log.New(os.Stdout, "", log.Llongfile|log.Ldate|log.Ltime)
@@ -26,6 +27,7 @@ type PersistentStreamSender struct {
 	errorChan        chan error
 	completeChan     chan bool
 	id               string
+	terminated       bool
 	connectionParams connectionParams
 }
 
@@ -99,6 +101,9 @@ func SendStreamWithWriter(target *url.URL, boundary string, httpHeaders map[stri
 }
 
 func (pss *PersistentStreamSender) Write(b []byte) (int, error) {
+	if pss.terminated {
+		return 0, errors.New("Writing to terminated persistent stream")
+	}
 	return pss.buffer.Write(b)
 }
 
@@ -106,7 +111,7 @@ func (pss *PersistentStreamSender) Close() error {
 	return pss.buffer.Close()
 }
 
-func (psw *PersistentStreamSender) writeSourceToBuffer(source io.ReadCloser) {
+func (pss *PersistentStreamSender) writeSourceToBuffer(source io.ReadCloser) {
 	var n int
 	var err error
 	buf := make([]byte, 1024*1024)
@@ -115,10 +120,10 @@ func (psw *PersistentStreamSender) writeSourceToBuffer(source io.ReadCloser) {
 		n, err = source.Read(buf)
 
 		if err == io.EOF {
-			if _, err = psw.buffer.Write(buf[:n]); err != nil {
+			if _, err = pss.buffer.Write(buf[:n]); err != nil {
 				logger.Panicln(err)
 			}
-			psw.buffer.Close()
+			pss.buffer.Close()
 
 			if err := source.Close(); err != nil {
 				logger.Println("Not fatal error:", err)
@@ -130,8 +135,15 @@ func (psw *PersistentStreamSender) writeSourceToBuffer(source io.ReadCloser) {
 			logger.Panicln(err)
 		}
 
-		if _, err = psw.buffer.Write(buf[:n]); err != nil {
+		if _, err = pss.buffer.Write(buf[:n]); err != nil {
 			logger.Panicln(err)
+		}
+
+		if pss.terminated {
+			pss.buffer.Close()
+			if err := source.Close(); err != nil {
+				logger.Println("Not fatal error:", err)
+			}
 		}
 	}
 }
@@ -147,4 +159,20 @@ func (pss *PersistentStreamSender) Wait() error {
 
 func SetVerbose(v bool) {
 	verbose = v
+	if v {
+		f, err := os.Create("persistentStreamSender.log")
+		if err != nil {
+			logger.Println(err)
+			return
+		}
+		verboseLog = log.New(f, "", log.Ldate|log.Ltime)
+	}
+}
+
+func (pss *PersistentStreamSender) TerminateOnError(err error) {
+	go func() {
+		pss.errorChan <- err
+	}()
+	pss.terminated = true
+	logger.Println("Terminating persistent send stream due to error", err)
 }
