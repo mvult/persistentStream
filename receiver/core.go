@@ -128,7 +128,7 @@ func handleStream(w http.ResponseWriter, r *http.Request, writerFunc func(w http
 				pss.writer.Close()
 			}
 
-			if pss != nil {
+			if pss.inboundCompleteChan != nil {
 				close(pss.inboundCompleteChan)
 			}
 			master.delete(pss.id)
