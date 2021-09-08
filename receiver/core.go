@@ -121,17 +121,17 @@ func handleStream(w http.ResponseWriter, r *http.Request, writerFunc func(w http
 	defer func() {
 		if err != nil {
 			logger.Println("Fatal persistence error.  Closing downstream writer. Underlying error.", err)
-			closing := true
-			if pss == nil || pss.writer == nil {
-				closing = false
-			}
-			logger.Printf("PSS: %+v   Writer: %+v  Closing: %v\n", pss, pss.writer, closing)
 
-			if closing {
-				master.delete(pss.id)
+			logger.Printf("PSS: %+v   Writer: %+v\n", pss, pss.writer)
+
+			if pss.writer != nil {
 				pss.writer.Close()
+			}
+
+			if pss != nil {
 				close(pss.inboundCompleteChan)
 			}
+			master.delete(pss.id)
 		}
 	}()
 
