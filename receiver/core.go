@@ -128,6 +128,7 @@ func handleStream(w http.ResponseWriter, r *http.Request, writerFunc func(w http
 			logger.Printf("PSS: %+v   Writer: %+v  Closing: %v\n", pss, pss.writer, closing)
 
 			if closing {
+				master.delete(pss.id)
 				pss.writer.Close()
 				close(pss.inboundCompleteChan)
 			}
