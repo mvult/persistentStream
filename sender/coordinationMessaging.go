@@ -9,11 +9,11 @@ import (
 	// "persistentStream/sender/globals"
 )
 
-func (psw *PersistentStreamSender) receiverAccepting(reattach bool) error {
+func (psw *PersistentStreamSender) receiverAccepting(reattach bool) (error, error) {
 	req, err := http.NewRequest("POST", psw.connectionParams.target.String(), nil)
 	if err != nil {
 		logger.Println(err)
-		return err
+		return err, nil
 	}
 
 	req.Header = make(map[string][]string)
@@ -35,26 +35,27 @@ func (psw *PersistentStreamSender) receiverAccepting(reattach bool) error {
 	res, err := client.Do(req)
 	if err != nil {
 		logger.Println(err)
-		return err
+		return err, nil
 	}
 
 	var respJson globals.JsonResponse
 	if err := json.NewDecoder(res.Body).Decode(&respJson); err != nil {
 		logger.Println(err)
-		return fmt.Errorf("Unable to parse coordination message.  Reattach: %v", reattach)
+		return nil, fmt.Errorf("Unable to parse coordination message.  Reattach: %v", reattach)
 	}
+	logger.Println(respJson)
 
 	if respJson.Status != "success" {
 		err = fmt.Errorf(respJson.Error)
 		logger.Println(err)
-		return err
+		return nil, err
 	}
 
 	if res.StatusCode != 200 {
 		err = fmt.Errorf("Unknown error.  Status: %v   Error: %v", res.StatusCode, respJson.Error)
 		logger.Println(err)
-		return err
+		return nil, err
 	}
 
-	return nil
+	return nil, nil
 }

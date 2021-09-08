@@ -17,7 +17,10 @@ const MAX_GET_WRITER_ATTEMPS = 90
 
 func (pss *PersistentStreamSender) SendBufferToHttp() (err error) {
 	// send initial coords message
-	if err = pss.receiverAccepting(false); err != nil {
+	var fatalErr error
+	if err, fatalErr = pss.receiverAccepting(false); err != nil || fatalErr != nil {
+		err = errors.New(fmt.Sprint(err, fatalErr))
+		logger.Println(err)
 		return
 	}
 
@@ -102,11 +105,18 @@ func (pss *PersistentStreamSender) getHttpWriter(reattach bool) error {
 func (pss *PersistentStreamSender) getReattachedWriter() error {
 	numGetWriterAttempts := 0
 	var err error
+	var fatalError error
 
 	for {
-		if err = pss.receiverAccepting(true); err != nil {
+		if err, fatalError = pss.receiverAccepting(true); err != nil || fatalError != nil {
+			logger.Println(err)
+			if fatalError != nil {
+				return fatalError
+			}
+
 			goto errorHandle
 		}
+		logger.Println(err)
 
 		err = pss.getHttpWriter(true)
 
