@@ -68,7 +68,7 @@ func SendStreamWithReader(source io.ReadCloser, target *url.URL, boundary string
 	err = ret.SendBufferToHttp()
 
 	if err == nil {
-		go ret.writeSourceToBuffer(source)
+		go ret.writeSourceToBuffer(source, ret.errorChan)
 	}
 	return &ret, err
 }
@@ -118,10 +118,17 @@ func (pss *PersistentStreamSender) Close() error {
 	return pss.buffer.Close()
 }
 
-func (pss *PersistentStreamSender) writeSourceToBuffer(source io.ReadCloser) {
+func (pss *PersistentStreamSender) writeSourceToBuffer(source io.ReadCloser, errorChan chan error) {
 	var n int
 	var err error
 	buf := make([]byte, 1024*1024)
+
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Println("Recovered from persistentStream panic", r)
+			errorChan <- errors.New(fmt.Sprintf("Panic in persistentStream writeSourceToBuffer: %v\n", r))
+		}
+	}()
 
 	for {
 		n, err = source.Read(buf)

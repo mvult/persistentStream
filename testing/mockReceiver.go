@@ -20,7 +20,7 @@ func mockReceiver(path string) {
 
 func handlePersistence(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Got request")
-	receiver.HandlePersistentStream(w, r, STREAM_BOUNDARY, acceptFunc, writerFunc)
+	receiver.HandlePersistentStream(w, r, STREAM_BOUNDARY, acceptFunc, writerFunc, 50)
 }
 
 func acceptFunc(w http.ResponseWriter, r *http.Request) bool {

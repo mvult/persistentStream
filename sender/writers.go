@@ -73,7 +73,6 @@ func (pss *PersistentStreamSender) SendBufferToHttp() (err error) {
 
 func (pss *PersistentStreamSender) getHttpWriter(reattach bool) error {
 	tmpHeaders := make(map[string]string)
-	// tmpHeaders := pss.connectionParams.httpHeaders
 	for k, h := range pss.connectionParams.httpHeaders {
 		tmpHeaders[k] = h
 	}
@@ -136,6 +135,5 @@ func (pss *PersistentStreamSender) getReattachedWriter() error {
 }
 
 func isNetworkError(err error) bool {
-	// return strings.Contains(err.Error(), "io: read/write on closed pipe") || strings.Contains(err.Error(), WRITER_TIMEOUT_ERROR.Error())
 	return strings.Contains(err.Error(), "io: read/write on closed pipe") || errors.Is(err, timeoutWriter.WRITER_TIMEOUT_ERROR)
 }

@@ -24,7 +24,7 @@ func reattach(w http.ResponseWriter, r *http.Request) error {
 	}
 	pss.setWaitingForReplacement(false)
 
-	logger.Printf("Succesfully reattached stream %v.  Current master: %v\n", id, master.streams)
+	logger.Printf("Successfully reattached stream %v.  Current master: %v\n", id, master.streams)
 
 	<-pss.inboundCompleteChan
 	return nil

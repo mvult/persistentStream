@@ -16,8 +16,6 @@ import (
 	"github.com/mvult/persistentStream/sender/globals"
 )
 
-const ITERATIONS_WAITING_LIMIT = 120
-
 var logger *log.Logger
 var verboseLog *log.Logger
 var verbose bool
@@ -68,19 +66,19 @@ func newReceiver(w http.ResponseWriter, r *http.Request, writerFunc func(w http.
 	return &ret, nil
 }
 
-func HandlePersistentStream(w http.ResponseWriter, r *http.Request, boundary string, acceptFunc func(w http.ResponseWriter, r *http.Request) bool, writerFunc func(w http.ResponseWriter, r *http.Request, mimeHeader textproto.MIMEHeader) (io.WriteCloser, error)) {
+func HandlePersistentStream(w http.ResponseWriter, r *http.Request, boundary string, acceptFunc func(w http.ResponseWriter, r *http.Request) bool, writerFunc func(w http.ResponseWriter, r *http.Request, mimeHeader textproto.MIMEHeader) (io.WriteCloser, error), reattachAttemptsLimit int) error {
 
-	isCoord := r.Header.Get(globals.COORD_OR_STREAM_HEADER) == globals.COORD
 	var b []byte
-
+	var err error
+	isCoord := IsCoordinationRequest(r)
 	if isCoord {
-		if err := handleCoordination(w, r, acceptFunc); err != nil {
+		if err = handleCoordination(w, r, acceptFunc); err != nil {
 			b, _ = json.Marshal(globals.JsonResponse{Status: "failure", Error: err.Error()})
 		} else {
 			b, _ = json.Marshal(globals.JsonResponse{Status: "success"})
 		}
 	} else {
-		if err := handleStream(w, r, writerFunc, boundary); err != nil {
+		if err = handleStream(w, r, writerFunc, boundary, reattachAttemptsLimit); err != nil {
 			b, _ = json.Marshal(globals.JsonResponse{Status: "failure", Error: err.Error()})
 		} else {
 			b, _ = json.Marshal(globals.JsonResponse{Status: "success"})
@@ -88,7 +86,7 @@ func HandlePersistentStream(w http.ResponseWriter, r *http.Request, boundary str
 	}
 	w.Write(b)
 	logger.Printf("Responding to persistence request %v.  Is Coord: %v\n", string(b), isCoord)
-	return
+	return err
 }
 
 func handleCoordination(w http.ResponseWriter, r *http.Request, acceptFunc func(w http.ResponseWriter, r *http.Request) bool) error {
@@ -115,13 +113,12 @@ func handleCoordination(w http.ResponseWriter, r *http.Request, acceptFunc func(
 	}
 }
 
-func handleStream(w http.ResponseWriter, r *http.Request, writerFunc func(w http.ResponseWriter, r *http.Request, mimeHeader textproto.MIMEHeader) (io.WriteCloser, error), boundary string) (err error) {
+func handleStream(w http.ResponseWriter, r *http.Request, writerFunc func(w http.ResponseWriter, r *http.Request, mimeHeader textproto.MIMEHeader) (io.WriteCloser, error), boundary string, reattachAttemptsLimit int) (err error) {
 
 	var pss *PersistentStreamReceiver
 	defer func() {
 		if err != nil {
-			logger.Println("Fatal persistence error.  Closing downstream writer. Underlying error.", err)
-			logger.Printf("PSS: %+v   Writer: %+v \n", pss, pss.writer)
+			logger.Printf("Fatal persistence error.  Closing downstream writer. Underlying error: %v.\nPSS: %+v\nWriter: %+v\n", err, pss, pss.writer)
 
 			if pss.writer != nil {
 				pss.writer.Close()
@@ -149,8 +146,9 @@ func handleStream(w http.ResponseWriter, r *http.Request, writerFunc func(w http
 
 		for {
 			if pss.getWaitingForReplacement() {
-				if iterationsWaiting > ITERATIONS_WAITING_LIMIT {
-					err = fmt.Errorf("Waited too long for replacement stream %v\n", pss.id)
+				if iterationsWaiting > reattachAttemptsLimit {
+					// err = fmt.Errorf("Waited too long for replacement stream %v\n", pss.id)
+					err = &PersistenceTimeoutError{pss.id}
 					return
 				}
 
@@ -193,4 +191,8 @@ func SetVerbose(v bool) {
 		}
 		verboseLog = log.New(f, "", log.Ldate|log.Ltime)
 	}
+}
+
+func IsCoordinationRequest(r *http.Request) bool {
+	return r.Header.Get(globals.COORD_OR_STREAM_HEADER) == globals.COORD
 }
