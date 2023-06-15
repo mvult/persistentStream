@@ -147,14 +147,13 @@ func handleStream(w http.ResponseWriter, r *http.Request, writerFunc func(w http
 		for {
 			if pss.getWaitingForReplacement() {
 				if iterationsWaiting > reattachAttemptsLimit {
-					// err = fmt.Errorf("Waited too long for replacement stream %v\n", pss.id)
 					err = &PersistenceTimeoutError{pss.id}
 					return
 				}
 
 				iterationsWaiting++
 				if iterationsWaiting < 5 || iterationsWaiting%10 == 0 {
-					logger.Printf("Waiting for replacement on stream %v. Iterations Waiting: %v\n", pss.id, iterationsWaiting)
+					logger.Printf("Waiting for replacement on stream %v. Iterations Waiting: %v/%v\n", pss.id, iterationsWaiting, reattachAttemptsLimit)
 				}
 				time.Sleep(time.Second * 5)
 				continue
